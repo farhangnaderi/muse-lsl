@@ -1,10 +1,10 @@
 import re
 import subprocess
 from sys import platform
-from time import time
+from time import time,sleep
 from functools import partial
 from shutil import which
-
+import numpy as np
 from pylsl import StreamInfo, StreamOutlet
 import pygatt
 
@@ -206,17 +206,32 @@ def stream(
 
             gyro_outlet = StreamOutlet(gyro_info, LSL_GYRO_CHUNK)
 
-        def push(data, timestamps, outlet):
+        def push(data, timestamps, outlet, data_type):
             for ii in range(data.shape[1]):
                 outlet.push_sample(data[:, ii], timestamps[ii])
+                #print(f'{data_type} Data: {data[:, ii]}')  # Print stream data
+                sleep(1)
+                # Calculate delta and theta states
+                eeg_data = data[:, ii]
+                delta_power = np.mean(eeg_data[2:4])  # Assuming delta frequency range is 2-4 Hz
+                theta_power = np.mean(eeg_data[4:8])  # Assuming theta frequency range is 4-8 Hz
 
-        push_eeg = partial(push, outlet=eeg_outlet) if not eeg_disabled else None
-        push_ppg = partial(push, outlet=ppg_outlet) if ppg_enabled else None
-        push_acc = partial(push, outlet=acc_outlet) if acc_enabled else None
-        push_gyro = partial(push, outlet=gyro_outlet) if gyro_enabled else None
+                #print(f'Delta Power: {delta_power}')
+                #print(f'Theta Power: {theta_power}')
+                        # Compare delta and theta power
+                if delta_power > theta_power:
+                    print("In Delta state")
+                else:
+                    print("In Theta state")
+        push_eeg = partial(push, outlet=eeg_outlet, data_type='EEG') if not eeg_disabled else None
+        push_ppg = partial(push, outlet=ppg_outlet, data_type='PPG') if ppg_enabled else None
+        push_acc = partial(push, outlet=acc_outlet, data_type='ACC') if acc_enabled else None
+        push_gyro = partial(push, outlet=gyro_outlet, data_type='GYRO') if gyro_enabled else None
 
         muse = Muse(address=address, callback_eeg=push_eeg, callback_ppg=push_ppg, callback_acc=push_acc, callback_gyro=push_gyro,
                     backend=backend, interface=interface, name=name, preset=preset, disable_light=disable_light)
+
+
 
         didConnect = muse.connect()
 
