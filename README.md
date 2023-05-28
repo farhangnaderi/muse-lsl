@@ -36,6 +36,10 @@ To print a list of available muses:
 To begin an LSL stream from the first available Muse:
 
     $ muselsl stream  
+ 
+This is the way to bring it up on MacOs (You are recommended to be on VirtualEnv)
+
+    $ sudo python3 -m muselsl stream -b bleak
 
 To connect to a specific Muse you can pass the name of the device as an argument. Device names can be found on the inside of the left earpiece (e.g. Muse-41D2):
 
